@@ -140,8 +140,13 @@
     <p class="subtitle">以白银计俸 · 观古今之所得</p>
 
     <div class="card">
-      <label for="salary">月薪（元）</label>
+      <label for="salary">金额（元）</label>
       <input id="salary" type="number" placeholder="例如 23000" min="0" inputmode="numeric" />
+      <label for="salaryType">薪资类型</label>
+      <select id="salaryType">
+        <option value="monthly" selected>按月（当前输入为月薪）</option>
+        <option value="yearly">按年（当前输入为年薪）</option>
+      </select>
 
       <label for="price">今日银价（元 / 克）</label>
       <input id="price" type="number" step="0.01" value="6.0" min="0.01" placeholder="默认约 6 元/克" />
@@ -176,6 +181,7 @@
 
   <script>
     const salaryInput = document.getElementById("salary");
+    const salaryTypeSelect = document.getElementById("salaryType");
     const priceInput = document.getElementById("price");
     const dynastySelect = document.getElementById("dynasty");
     const dynastyDescEl = document.getElementById("dynastyDesc");
@@ -255,14 +261,19 @@
     }
 
     function calc() {
-      const salary = parseFloat(salaryInput.value);
+      const rawSalary = parseFloat(salaryInput.value);
       const price = parseFloat(priceInput.value);
-      if (!salary || !price || price <= 0) {
+      if (!rawSalary || !price || price <= 0) {
         liangEl.textContent = "— 两";
         rankEl.textContent = "";
         lifeEl.textContent = "";
         return;
       }
+      // 按薪资类型换算为月薪
+      const salary =
+        salaryTypeSelect && salaryTypeSelect.value === "yearly"
+          ? rawSalary / 12
+          : rawSalary;
       const gram = salary / price;
       const liang = gram / 50;
       const dynasty = dynastySelect.value;
@@ -279,6 +290,7 @@
     }
 
     dynastySelect.addEventListener("change", () => { showDynastyDesc(); calc(); });
+    salaryTypeSelect.addEventListener("change", calc);
     salaryInput.addEventListener("input", calc);
     priceInput.addEventListener("input", calc);
 
