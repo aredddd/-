@@ -280,7 +280,8 @@
     priceInput.addEventListener("input", calc);
 
     // 从 GitHub 每日更新的 data/price.json 读取默认银价（失败则保持 6.0）
-    fetch("data/price.json")
+    // 加 ?t= 避免浏览器/CDN 缓存旧数据
+    fetch("data/price.json?t=" + Date.now())
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => { if (d && typeof d.cnyPerGram === "number") priceInput.value = Number(d.cnyPerGram).toFixed(2); })
       .catch(() => {})
