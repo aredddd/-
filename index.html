@@ -359,7 +359,8 @@
       const dynastyName = DYNASTY_NAMES[dynasty] || dynasty;
       const tierIndex = Math.min(tiers.indexOf(info), SHARE_PHRASES.length - 1);
       const phrase = SHARE_PHRASES[tierIndex >= 0 ? tierIndex : 0];
-      return "本官今月俸银 " + Number(liang).toFixed(1) + " 两（" + dynastyName + "），" + phrase + "。";
+      const siteRoot = location.origin + location.pathname.replace(/\/[^/]*$/, "") + "/";
+      return "本官今月俸银 " + Number(liang).toFixed(1) + " 两（" + dynastyName + "），" + phrase + "。\n来算算你的俸禄 👉 " + siteRoot;
     }
 
     shareBtn.addEventListener("click", function () {
