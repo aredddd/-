@@ -120,6 +120,24 @@
       border-radius: 8px;
     }
     .goods strong { color: var(--ink); }
+    .share-row { margin-top: 16px; text-align: center; }
+    .btn-share {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn-share:hover:not(:disabled) { background: rgba(139, 105, 20, 0.2); }
+    .btn-share:disabled { opacity: 0.5; cursor: not-allowed; }
+    .share-toast { margin-top: 8px; font-size: 12px; color: var(--muted); min-height: 18px; }
+    .share-toast.ok { color: #2d6a2d; }
     .price-link { font-size: 12px; margin-top: 6px; }
     .price-link a { color: var(--accent); text-decoration: none; }
     .price-link a:hover { text-decoration: underline; }
@@ -180,6 +198,10 @@
         <div class="rank" id="rank"></div>
         <div class="life" id="life"></div>
         <div class="goods" id="goods" aria-live="polite"></div>
+        <div class="share-row">
+          <button type="button" class="btn-share" id="shareBtn" disabled>📋 生成分享卡片</button>
+          <div class="share-toast" id="shareToast" aria-live="polite"></div>
+        </div>
       </div>
 
       <div class="foot-note">
@@ -206,6 +228,12 @@
     const rankEl = document.getElementById("rank");
     const lifeEl = document.getElementById("life");
     const goodsEl = document.getElementById("goods");
+    const shareBtn = document.getElementById("shareBtn");
+    const shareToast = document.getElementById("shareToast");
+
+    const DYNASTY_NAMES = { han: "汉代", sui: "隋代", tang: "唐代", song: "宋代", yuan: "元代", ming: "明代", qing: "清代" };
+    // 各档位对应的简短分享语（从低到高）
+    const SHARE_PHRASES = ["勉强度日", "尚可维生", "居家有余", "锦衣玉食", "位极人臣", "非俸禄可限"];
 
     // 按明清常价粗算：1 两 ≈ 1 石米、≈ 2 匹布（粗布）、≈ 10 斤肉（各地各时波动大，仅作量级参考）
     function formatGoods(liang) {
@@ -302,6 +330,8 @@
         rankEl.textContent = "";
         lifeEl.textContent = "";
         goodsEl.textContent = "";
+        shareBtn.disabled = true;
+        shareToast.textContent = "";
         return;
       }
       // 按薪资类型换算为月薪
@@ -317,7 +347,34 @@
       rankEl.textContent = info ? info.rank : "";
       lifeEl.textContent = info ? info.life : "";
       goodsEl.textContent = formatGoods(liang);
+      shareBtn.disabled = false;
+      lastShare = { liang, dynasty, info, tiers: FENGLU_DATA[dynasty] };
     }
+
+    let lastShare = null;
+
+    function buildShareText() {
+      if (!lastShare || !lastShare.info) return "";
+      const { liang, dynasty, info, tiers } = lastShare;
+      const dynastyName = DYNASTY_NAMES[dynasty] || dynasty;
+      const tierIndex = Math.min(tiers.indexOf(info), SHARE_PHRASES.length - 1);
+      const phrase = SHARE_PHRASES[tierIndex >= 0 ? tierIndex : 0];
+      return "本官今月俸银 " + Number(liang).toFixed(1) + " 两（" + dynastyName + "），" + phrase + "。";
+    }
+
+    shareBtn.addEventListener("click", function () {
+      const text = buildShareText();
+      if (!text) return;
+      shareToast.textContent = "";
+      shareToast.classList.remove("ok");
+      navigator.clipboard.writeText(text).then(function () {
+        shareToast.textContent = "已复制到剪贴板，可粘贴到朋友圈或微博～";
+        shareToast.classList.add("ok");
+        setTimeout(function () { shareToast.textContent = ""; shareToast.classList.remove("ok"); }, 2500);
+      }).catch(function () {
+        shareToast.textContent = "复制失败，请手动选择上方文案复制";
+      });
+    });
 
     function fengluInfo(liang, dynasty) {
       const tiers = FENGLU_DATA[dynasty];
