@@ -1,0 +1,55 @@
+# 每日更新银价数据（需在仓库 Settings → Secrets 中配置 SILVER_PRICE_API_KEY）
+# 免费 Key：https://metalpriceapi.com/register
+name: 每日更新银价
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 每天 0:00 UTC（北京时间 8:00）
+  workflow_dispatch:       # 支持手动运行
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 获取银价并写入 data/price.json
+        env:
+          API_KEY: ${{ secrets.SILVER_PRICE_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "未配置 SILVER_PRICE_API_KEY，跳过更新。请在仓库 Settings → Secrets 中添加。"
+            exit 0
+          fi
+          res=$(curl -s "https://api.metalpriceapi.com/v1/latest?api_key=${API_KEY}&base=USD&currencies=XAG,CNY")
+          if ! echo "$res" | jq -e '.success == true' > /dev/null 2>&1; then
+            echo "API 请求失败: $res"
+            exit 1
+          fi
+          # USDXAG = 每盎司银的美元价，CNY = 1 美元兑人民币，1 盎司 ≈ 31.1035 克
+          usd_xag=$(echo "$res" | jq -r '.rates.USDXAG')
+          cny_per_usd=$(echo "$res" | jq -r '.rates.CNY')
+          cny_per_gram=$(echo "scale=4; $usd_xag * $cny_per_usd / 31.1035" | bc)
+          date_iso=$(date -u +%Y-%m-%d)
+          mkdir -p data
+          echo "{\"cnyPerGram\": $cny_per_gram, \"date\": \"$date_iso\"}" > data/price.json
+          echo "已更新银价: $cny_per_gram 元/克 ($date_iso)"
+
+      - name: 提交并推送
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git add data/price.json
+          if git diff --staged --quiet; then
+            echo "无变更，跳过提交"
+          else
+            git commit -m "chore: 更新银价数据 [skip ci]"
+            git push
+          fi

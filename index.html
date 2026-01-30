@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>俸禄计算器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --card: #fffef9;
+      --ink: #1a1a1a;
+      --muted: #5c5c5c;
+      --border: #d4cfc4;
+      --accent: #8b6914;
+      --accent-soft: rgba(139, 105, 20, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 16px 48px;
+      background: var(--bg);
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    .container { max-width: 560px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 6px;
+      font-size: 1.75rem;
+      margin: 0;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+      letter-spacing: 2px;
+    }
+    .card {
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    label:first-of-type { margin-top: 0; }
+    input, select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-family: inherit;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .dynasty-desc {
+      margin-top: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      background: var(--accent-soft);
+      border-radius: 10px;
+      border-left: 3px solid var(--accent);
+      line-height: 1.65;
+      display: none;
+    }
+    .dynasty-desc.visible { display: block; }
+    .result {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border);
+      text-align: center;
+    }
+    .result-label { font-size: 13px; color: var(--muted); }
+    .liang {
+      font-size: 2.25rem;
+      font-weight: 600;
+      margin: 8px 0 4px;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    .rank {
+      font-size: 17px;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+    .life {
+      margin-top: 14px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.85;
+      color: var(--muted);
+      padding: 0 4px;
+    }
+    .price-link { font-size: 12px; margin-top: 6px; }
+    .price-link a { color: var(--accent); text-decoration: none; }
+    .price-link a:hover { text-decoration: underline; }
+    .foot-note {
+      margin-top: 28px;
+      padding: 14px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--accent-soft);
+      border-radius: 10px;
+      line-height: 1.7;
+    }
+    .foot-note strong { color: var(--ink); }
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+    }
+    @media (min-width: 400px) {
+      .liang { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>俸禄计算器</h1>
+    <p class="subtitle">以白银计俸 · 观古今之所得</p>
+
+    <div class="card">
+      <label for="salary">月薪（元）</label>
+      <input id="salary" type="number" placeholder="例如 23000" min="0" inputmode="numeric" />
+
+      <label for="price">今日银价（元 / 克）</label>
+      <input id="price" type="number" step="0.01" value="6.0" min="0.01" placeholder="默认约 6 元/克" />
+      <p class="price-link">查实时银价：<a href="https://ag.cngold.org/bybj/" target="_blank" rel="noopener">金投网 · 白银报价</a></p>
+
+      <label for="dynasty">朝代</label>
+      <select id="dynasty">
+        <option value="han">汉代</option>
+        <option value="sui">隋代</option>
+        <option value="tang">唐代</option>
+        <option value="song">宋代</option>
+        <option value="yuan">元代</option>
+        <option value="ming">明代</option>
+        <option value="qing">清代</option>
+      </select>
+      <div id="dynastyDesc" class="dynasty-desc" aria-live="polite"></div>
+
+      <div class="result">
+        <div class="result-label">折合月俸（银两）</div>
+        <div class="liang" id="liang">— 两</div>
+        <div class="rank" id="rank"></div>
+        <div class="life" id="life"></div>
+      </div>
+
+      <div class="foot-note">
+        <strong>换算说明：</strong>1 两 = 50 克（明清常制）。历代计量与支付方式不同（钱帛、禄米、银两等），此处统一折银便于比较。非史学精算，仅供文化与认知参考。
+      </div>
+    </div>
+
+    <footer>仅供娱乐与认知参考 · 不作为学术依据</footer>
+  </div>
+
+  <script>
+    const salaryInput = document.getElementById("salary");
+    const priceInput = document.getElementById("price");
+    const dynastySelect = document.getElementById("dynasty");
+    const dynastyDescEl = document.getElementById("dynastyDesc");
+    const liangEl = document.getElementById("liang");
+    const rankEl = document.getElementById("rank");
+    const lifeEl = document.getElementById("life");
+
+    const DYNASTY_DESCRIPTIONS = {
+      han: "汉代俸禄以「石」计粮为主，高官有钱帛赏赐。此处按后世银两等价折算，便于与明清对比。",
+      sui: "隋代官俸以禄米、职田为主，京官与外官有别，品级与石数对应。折银仅为直观比较。",
+      tang: "唐代俸料、职田、禄米并行，中后期渐有现钱。此处将月俸折为银两等价，以观其购买力。",
+      song: "宋代官员待遇优厚，俸钱、禄粟、职田、添支等名目繁多，有「恩逮百官惟恐不足」之说。折银便于比较。",
+      yuan: "元代俸禄以钞、粮为主，中统钞、至元钞更迭，品级与俸钞对应。此处按银等价折算。",
+      ming: "明代中后期官俸以银、米兼发，正俸偏低，实际收入多赖火耗、羡余等，此处仅论正俸折银。",
+      qing: "清代俸银、禄米与养廉银并行，养廉银常远高于正俸。此处以正俸折银，可与明代对照。"
+    };
+
+    const FENGLU_DATA = {
+      han: [
+        { max: 20, rank: "斗食小吏 / 役卒", life: "秩卑禄薄，日食粗粮，勉强度日，居闾里陋室，无余财。" },
+        { max: 50, rank: "百石至三百石", life: "衣食可足，可养家小，偶有肉食，居城郭普通宅舍，属中人之家。" },
+        { max: 100, rank: "六百石左右（县令级）", life: "俸足以养廉，车马具备，宅第像样，可蓄仆役，地方显望。" },
+        { max: 300, rank: "二千石（郡守级）", life: "钟鸣鼎食，府邸深广，属吏众多，一郡之尊，世族门第。" },
+        { max: Infinity, rank: "万石 / 公卿", life: "位极人臣，封侯食邑，非俸禄可限，财富与权位一体。" }
+      ],
+      sui: [
+        { max: 20, rank: "流外吏 / 胥吏", life: "禄米有限，生活清苦，居坊里小宅，日求温饱。" },
+        { max: 50, rank: "八九品及外官低品", life: "禄米职田可养家，衣食无忧，居处尚可，属中下官吏。" },
+        { max: 100, rank: "五六品（州郡属官）", life: "俸料充足，车马在身，宅第规整，仆役数人，体面度日。" },
+        { max: 300, rank: "三四品（刺史级）", life: "高官厚禄，宴饮不绝，府宅深院，门生故吏，一方重臣。" },
+        { max: Infinity, rank: "一二品 / 宰辅", life: "位高权重，赏赐无数，其富在权不在俸。" }
+      ],
+      tang: [
+        { max: 20, rank: "流外 / 胥吏", life: "俸料微薄，禄粮并给，可温饱度日，居坊巷陋室，无奢华。" },
+        { max: 50, rank: "八九品及基层", life: "衣食优渥，可养家族，社交体面，居城内寻常宅第。" },
+        { max: 100, rank: "五品至七品", life: "马车出行，宅第宽敞，宴饮成常，仆役齐备，士人阶层。" },
+        { max: 300, rank: "三品以上", life: "钟鸣鼎食，门第显赫，园林别业，士族核心，名动朝野。" },
+        { max: Infinity, rank: "宰辅 / 勋贵", life: "一人之下，封赏无数，非金银所能计。" }
+      ],
+      song: [
+        { max: 20, rank: "小吏 / 低级武职", life: "俸钱有限，禄粟补之，可维持家用，居城坊小宅。" },
+        { max: 50, rank: "选人 / 州县属官", life: "俸禄优厚，添支、职田并给，衣食无忧，交际应酬不愁。" },
+        { max: 100, rank: "京朝官 / 知州级", life: "钱粟丰足，宅第讲究，仆从成行，宴游诗酒，士大夫生活。" },
+        { max: 300, rank: "侍郎、尚书级", life: "恩赏繁多，府邸园林，门客清客，名士往来，权贵之流。" },
+        { max: Infinity, rank: "宰执 / 使相", life: "俸禄仅其一端，恩荫、赏赐、田产不可胜计。" }
+      ],
+      yuan: [
+        { max: 20, rank: "吏员 / 巡检", life: "俸钞微薄，生活清苦，居处简陋，勉强度日。" },
+        { max: 50, rank: "八九品及路府属官", life: "俸钞禄米可养家，衣食尚可，居城郭普通宅舍。" },
+        { max: 100, rank: "五六品（路总管等）", life: "俸给充足，车马宅第齐备，仆役数人，蒙古色目汉官皆重体面。" },
+        { max: 300, rank: "二三品（行省大员）", life: "高官厚禄，赏赐频繁，府宅深广，权倾一方。" },
+        { max: Infinity, rank: "中书省 / 枢密重臣", life: "位极人臣，赏赐田产无数，非俸钞可论。" }
+      ],
+      ming: [
+        { max: 20, rank: "小吏 / 匠役", life: "正俸微薄，可温饱度日，日食粗粮，偶有肉食，居城坊陋室。" },
+        { max: 50, rank: "富户 / 胥吏", life: "三餐无忧，可蓄仆一人，衣食尚整，居城内平宅，中人之家。" },
+        { max: 100, rank: "县官 / 高俸", life: "肉食常有，绸衣在身，出行有轿，家中仆役齐备，地方望族。" },
+        { max: 300, rank: "知府 / 道台级", life: "宴饮频繁，府宅深院，奴仆成行，火耗羡余在握，地方实权。" },
+        { max: Infinity, rank: "封疆大吏 / 部院", life: "园林府邸，锦衣玉食，门客盈门，权倾一方，非正俸可限。" }
+      ],
+      qing: [
+        { max: 20, rank: "书吏 / 差役", life: "正俸极薄，多赖规费、灰色收入维持体面，清苦度日。" },
+        { max: 50, rank: "州县属官 / 佐贰", life: "俸银有限而养廉补之，衣食无忧，讲究体面，应酬不绝。" },
+        { max: 100, rank: "正七品以上", life: "坐轿出行，宅院成规，饮食精细，仆役数人，养廉银可观。" },
+        { max: 300, rank: "道台 / 巡抚", life: "养廉银远高于俸银，银钱往来巨大，宴客成风，权钱一体。" },
+        { max: Infinity, rank: "督抚 / 重臣", life: "非俸禄可衡量，其财力源于权与养廉、规礼本身。" }
+      ]
+    };
+
+    function showDynastyDesc() {
+      const v = dynastySelect.value;
+      dynastyDescEl.textContent = DYNASTY_DESCRIPTIONS[v] || "";
+      dynastyDescEl.classList.toggle("visible", !!DYNASTY_DESCRIPTIONS[v]);
+    }
+
+    function calc() {
+      const salary = parseFloat(salaryInput.value);
+      const price = parseFloat(priceInput.value);
+      if (!salary || !price || price <= 0) {
+        liangEl.textContent = "— 两";
+        rankEl.textContent = "";
+        lifeEl.textContent = "";
+        return;
+      }
+      const gram = salary / price;
+      const liang = gram / 50;
+      const dynasty = dynastySelect.value;
+      liangEl.textContent = liang.toFixed(1) + " 两";
+      const info = fengluInfo(liang, dynasty);
+      rankEl.textContent = info ? info.rank : "";
+      lifeEl.textContent = info ? info.life : "";
+    }
+
+    function fengluInfo(liang, dynasty) {
+      const tiers = FENGLU_DATA[dynasty];
+      if (!tiers) return null;
+      return tiers.find(d => liang <= d.max) || tiers[tiers.length - 1];
+    }
+
+    dynastySelect.addEventListener("change", () => { showDynastyDesc(); calc(); });
+    salaryInput.addEventListener("input", calc);
+    priceInput.addEventListener("input", calc);
+
+    // 从 GitHub 每日更新的 data/price.json 读取默认银价（失败则保持 6.0）
+    fetch("data/price.json")
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { if (d && typeof d.cnyPerGram === "number") priceInput.value = Number(d.cnyPerGram).toFixed(2); })
+      .catch(() => {})
+      .finally(() => { showDynastyDesc(); calc(); });
+  </script>
+</body>
+</html>
