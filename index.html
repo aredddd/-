@@ -110,6 +110,16 @@
       color: var(--muted);
       padding: 0 4px;
     }
+    .goods {
+      margin-top: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      background: rgba(0,0,0,0.04);
+      border-radius: 8px;
+    }
+    .goods strong { color: var(--ink); }
     .price-link { font-size: 12px; margin-top: 6px; }
     .price-link a { color: var(--accent); text-decoration: none; }
     .price-link a:hover { text-decoration: underline; }
@@ -169,6 +179,7 @@
         <div class="liang" id="liang">— 两</div>
         <div class="rank" id="rank"></div>
         <div class="life" id="life"></div>
+        <div class="goods" id="goods" aria-live="polite"></div>
       </div>
 
       <div class="foot-note">
@@ -188,6 +199,16 @@
     const liangEl = document.getElementById("liang");
     const rankEl = document.getElementById("rank");
     const lifeEl = document.getElementById("life");
+    const goodsEl = document.getElementById("goods");
+
+    // 按明清常价粗算：1 两 ≈ 1 石米、≈ 2 匹布（粗布）、≈ 10 斤肉（各地各时波动大，仅作量级参考）
+    function formatGoods(liang) {
+      if (liang <= 0) return "";
+      const rice = liang >= 0.1 ? liang.toFixed(1) : liang.toFixed(2);
+      const cloth = Math.max(0, Math.round(liang * 2));
+      const meat = Math.max(0, Math.round(liang * 10));
+      return "约可购 米 " + rice + " 石、布 " + cloth + " 匹、肉 " + meat + " 斤（按当时常价粗算）";
+    }
 
     const DYNASTY_DESCRIPTIONS = {
       han: "汉代俸禄以「石」计粮为主，下层吏卒多领实物口粮，上层官员则兼得钱帛赏赐与封邑。此处把典型石数折算为银两，只做大致量级换算，方便和后世对照。",
@@ -274,6 +295,7 @@
         liangEl.textContent = "— 两";
         rankEl.textContent = "";
         lifeEl.textContent = "";
+        goodsEl.textContent = "";
         return;
       }
       // 按薪资类型换算为月薪
@@ -288,6 +310,7 @@
       const info = fengluInfo(liang, dynasty);
       rankEl.textContent = info ? info.rank : "";
       lifeEl.textContent = info ? info.life : "";
+      goodsEl.textContent = formatGoods(liang);
     }
 
     function fengluInfo(liang, dynasty) {
