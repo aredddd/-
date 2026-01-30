@@ -46,7 +46,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
-          git add data/price.json
+          # data/price.json 被 .gitignore 忽略，这里强制加入以便机器人提交
+          git add -f data/price.json
           if git diff --staged --quiet; then
             echo "无变更，跳过提交"
           else
